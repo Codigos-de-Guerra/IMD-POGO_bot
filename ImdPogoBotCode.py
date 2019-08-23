@@ -12,12 +12,11 @@ docAzul = open("azul.txt","r+")
 docAmarelo = open("amarelo.txt","r+")
 docVermelho = open("vermelho.txt","r+")
 
-azul = []
-vermelho =[]
-amarelo =[]
+azul = set()
+vermelho =set()
+amarelo = set()
 
-raids = []
-raid_ids=[]
+raids = {}
 raidText="""
 🔰 RAID LEVEL {}
 🐣 Chefe: {}
@@ -68,7 +67,7 @@ def help(update, context):
     my_debug(update)
     """Send a message when the command /help is issued."""
     helpText="""
-    /raid (chefe, hora, gym, local): inicia uma nova raid e retorna um RAID ID;
+    /raid (level, chefe, hora, gym, local): inicia uma nova raid e retorna um RAID ID;
     /entrar (RAID ID), entra na raid;
     /sair (RAID ID), sai da raid[NÃO FUNCIONA AINDA];
     /acordo : TEXTÃO do acordo;
@@ -105,14 +104,31 @@ Recomendações para melhor proveito do acordo:
 def raid(update, context):
     my_debug(update)
     RAID_ID = random.randint(0, 10000)
-    while RAID_ID in raid_ids:
+    while RAID_ID in raids:
         RAID_ID = random.randint(0, 10000)
-    else:
-        raid_ids.append(RAID_ID)
-    thisRaidText = raidText.format(context.args[0], context.args[1], context.args[2], context.args[3], context.args[4])
-    raids.append([RAID_ID, context.args[0], context.args[1], context.args[2], context.args[3], context.args[4], thisRaidText, 1])
+
+    # Some standard values for missing arguments cases
+    level = "?"
+    boss = "?"
+    time = "?"
+    gym = "IMD"
+
+    try:
+        level = context.args[0]
+        boss = context.args[1]
+        time = context.args[2]
+        gym = context.args[3]
+        local = context.args[4]
+
+    except:
+        local = "UFRN"
+
+    thisRaidText = "RAID ID " + str(RAID_ID) + "\n" + raidText.format(level, boss, time, gym, local)
+    raids[RAID_ID] = [level, boss, time, gym, local, thisRaidText, 1]
+    print(raids[RAID_ID])
+    # raids.append([RAID_ID, level, boss, time, gym, local, thisRaidText, 1])
     update.message.reply_text(thisRaidText)
-    update.message.reply_text("RAID ID: "+str(RAID_ID))
+    # update.message.reply_text("RAID ID: "+str(RAID_ID))
 
 def info(update, context):
     my_debug(update)
@@ -161,11 +177,11 @@ def adicionar(update, context):
     my_debug(update)
     """Send a message when the command /help is issued."""
     if str(context.args[1]) == "azul":
-        azul.append(context.args[0])
+        azul.add(context.args[0])
     elif str(context.args[1]) == "vermelho":
-        vermelho.append(context.args[0])
+        vermelho.add(context.args[0])
     elif str(context.args[1]) == "amarelo":
-        amarelo.append(context.args[0])
+        amarelo.add(context.args[0])
 
 def remover(update, context):
     my_debug(update)
@@ -193,11 +209,13 @@ def time(update, context):
 
 def entrar(update, context):
     my_debug(update)
-    for raid in raids:
-        if str(raid[0])==str(context.args[0]):
-            raid[6] += "\n{}. {}".format(raid[7], update.message.from_user.username)
-            raid[7]+=1
-            update.message.reply_text(raid[6])
+    # for raid in raids:
+        # if str(raid[0])==str(context.args[0]):
+        #     raid[6] += "\n{}. {}".format(raid[7], update.message.from_user.username)
+        #     raid[7]+=1
+    raids[int(context.args[0])][5] += "\n{}. {}".format(raids[int(context.args[0])][6], update.message.from_user.username)
+    raids[int(context.args[0])][6] += 1
+    update.message.reply_text(raids[int(context.args[0])][5])
 
 
 def sair(update, context):
